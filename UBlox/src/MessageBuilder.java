@@ -14,9 +14,9 @@ public class MessageBuilder{
 	
 	PayloadBuilder payloadBuilder;
 	
-	byte[] message;
-	byte[] payload = new byte[] {};
-	byte[] checksum;
+	private byte[] message;
+	private byte[] payload = new byte[] {};
+	private byte[] checksum;
 	
 	private final byte SYNC_A = (byte) 0xb5;
 	private final byte SYNC_B = (byte) 0x62;
@@ -24,30 +24,35 @@ public class MessageBuilder{
 	MessageID messageID;
 	MessageClass messageClass;
 	
+	UBXMessage ubxMessage;
+	
+	
+	
 	//Message length is 6 byte header, N byte body and 2 byte checksum;
 	
-	public byte[] build() {
+	public UBXMessage build() {
 		
 		if(payloadBuilder != null) {
+			//Construct with a payload.
 		this.payload = payloadBuilder.getBody();
-		}
+		construct(payload);
 		
+		}else {
+		//Construct without a payload.
 		construct();
+		}
+		//In case the Builder object gets re-used.
+		payloadBuilder = null;
+		ubxMessage = new UBXMessage(message);
 		
-		
-		return message;
+		return ubxMessage;
 	}
 	
-	public byte[] getPaylod() {
-		return payload;
-	}
 	
-	public byte[] getCheckSum() {
-		return checksum;
-	}
 	
 	public MessageBuilder builder(MessageID configType, byte[] payload) {
-		
+		//This method for manually build payloads in testing. 
+		//Normally use the builder and reference the documentation. 
 		this.messageID = configType;
 		this.messageClass = configType.getMessageClass();
 		this.payload = payload;
@@ -67,6 +72,8 @@ public class MessageBuilder{
 	}
 	
 	public PayloadBuilder bodyBuilder() {
+		
+		//Include a payload in the message.
 		payloadBuilder = new PayloadBuilder(this);
 		return payloadBuilder;
 	}
@@ -74,6 +81,26 @@ public class MessageBuilder{
 	
 	
 	private void construct() {
+		//Payload gets added even when there is no payload in the message
+		short length = (short) 0;
+		
+		byte[] temp = new byte[]{SYNC_A, SYNC_B, messageClass.getByteVal(), messageID.getByteVal(), getByteArray(length)[0], getByteArray(length)[1] };
+		byte[] temp2 = new byte[temp.length + payload.length + 2];
+		
+		
+		System.arraycopy(temp, 0, temp2, 0, temp.length);
+		
+		
+		byte[] checkSum = calcChecksum(temp2);
+		
+		System.arraycopy(checkSum, 0, temp2, temp2.length-2, checkSum.length);
+		
+		
+		message = temp2;
+		
+	}
+	
+	private void construct(byte[] payload) {
 		//Payload gets added even when there is no payload in the message
 		short length = (short) this.payload.length;
 		

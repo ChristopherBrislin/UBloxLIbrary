@@ -9,7 +9,7 @@
  * 24 Jan 2021
  * UBlox
  */
-public enum MessageClass implements UBXMessage{
+public enum MessageClass implements MessageClassInterface{
 
 	// Not actually 16bit, first byte is class, second is ID
 
@@ -39,7 +39,9 @@ public enum MessageClass implements UBXMessage{
 
 	UBX_TIM((byte) 0x0D),
 
-	UBX_UPD((byte) 0x09)
+	UBX_UPD((byte) 0x09),
+	
+	UBX_RTCM((byte) 0xF5)
 
 	;
 
